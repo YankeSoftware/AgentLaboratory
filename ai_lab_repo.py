@@ -86,15 +86,18 @@ class LaboratoryWorkflow:
         self.ml_engineer = MLEngineerAgent(model=self.model_backbone, notes=self.notes, max_steps=self.max_steps, openai_api_key=self.openai_api_key)
         self.sw_engineer = SWEngineerAgent(model=self.model_backbone, notes=self.notes, max_steps=self.max_steps, openai_api_key=self.openai_api_key)
 
-        # remove previous files
-        remove_figures()
-        remove_directory("research_dir")
-        # make src and research directory
-        if not os.path.exists("state_saves"):
-            os.mkdir(os.path.join(".", "state_saves"))
-        os.mkdir(os.path.join(".", "research_dir"))
-        os.mkdir(os.path.join("./research_dir", "src"))
-        os.mkdir(os.path.join("./research_dir", "tex"))
+        # Initialize directories
+        try:
+            # Clean up and recreate research_dir structure
+            remove_figures()
+            remove_directory("research_dir")
+            os.makedirs(os.path.join(".", "research_dir", "src"), exist_ok=True)
+            os.makedirs(os.path.join(".", "research_dir", "tex"), exist_ok=True)
+            
+            # Ensure state_saves exists
+            os.makedirs(os.path.join(".", "state_saves"), exist_ok=True)
+        except Exception as e:
+            print(f"Warning during directory setup: {str(e)}")
 
     def set_model(self, model):
         self.set_agent_attr("model", model)
