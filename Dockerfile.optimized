@@ -1,0 +1,61 @@
+# Stage 1: Builder base
+FROM python:3.12-slim as builder-base
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Stage 2: Core dependencies
+FROM builder-base as builder-core
+
+COPY requirements-core.txt .
+RUN pip install --no-cache-dir -r requirements-core.txt
+
+# Stage 3: ML dependencies
+FROM builder-core as builder-ml
+
+COPY requirements-ml.txt .
+RUN pip install --no-cache-dir -r requirements-ml.txt
+
+# Stage 4: Final image
+FROM python:3.12-slim
+
+# Copy virtual environment from builder
+COPY --from=builder-ml /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install only necessary LaTeX packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV RESEARCH_DIR=/output/research_dir \
+    STATE_SAVES_DIR=/output/state_saves \
+    TF_CPP_MIN_LOG_LEVEL=2
+
+# Create directory structure
+RUN mkdir -p /output/research_dir/src /output/research_dir/tex /output/state_saves && \
+    chmod -R 777 /output
+
+# Copy application code
+COPY . .
+
+# Create symlinks
+RUN ln -sf /output/research_dir /app/research_dir && \
+    ln -sf /output/state_saves /app/state_saves
+
+# Set default command
+ENTRYPOINT ["python", "ai_lab_repo.py"]
+CMD ["--llm-backend", "deepseek-chat", "--research-topic", "YOUR_RESEARCH_IDEA"]

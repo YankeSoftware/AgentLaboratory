@@ -152,6 +152,32 @@ docker run -it --rm -v "$(pwd)/output:/output" -e OPENAI_API_KEY="your_key" agen
 docker run -it --rm -v "$(pwd)/output:/output" -e OPENAI_API_KEY="your_key" agent-laboratory --load-existing "true" --load-existing-path "state_saves/results_interpretation.pkl" --research-topic "Topic"
 ```
 
+#### Troubleshooting
+
+1. **Build Issues**:
+   - If the build seems stuck on LaTeX packages, use the minimal build: `docker build -f Dockerfile.minimal -t agent-laboratory .`
+   - For memory issues during build, try increasing Docker's memory limit in Docker Desktop settings
+
+2. **Runtime Issues**:
+   - TensorFlow CUDA warnings can be safely ignored (they're suppressed in our setup)
+   - Directory errors usually mean the output directory needs proper permissions
+   - If you see "directory exists" errors, the container might not have write permissions to your output directory
+
+3. **Quick Solutions**:
+   ```cmd
+   :: 1. Clean up any previous containers
+   docker system prune -f
+
+   :: 2. Create output directory with proper permissions
+   mkdir output
+   
+   :: 3. Use minimal build without LaTeX
+   docker build -f Dockerfile.minimal -t agent-laboratory .
+   
+   :: 4. Run with compile-latex disabled
+   docker run -it --rm -v "%CD%/output:/output" -e OPENAI_API_KEY="your_key" -e DEEPSEEK_API_KEY="your_key" agent-laboratory --llm-backend "deepseek-chat" --compile-latex "false" --research-topic "Your topic"
+   ```
+
 #### Important Notes
 
 1. **Directory Mounting**:

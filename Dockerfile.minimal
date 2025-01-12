@@ -14,17 +14,17 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Set up output directories
-RUN mkdir -p /output/research_dir /output/state_saves && \
-    chmod -R 777 /output
-
-# Set environment variables for output locations
+# Set up output directories and environment
 ENV RESEARCH_DIR=/output/research_dir
 ENV STATE_SAVES_DIR=/output/state_saves
+ENV TF_CPP_MIN_LOG_LEVEL=2
 
-# Create symlinks for output directories
-RUN ln -s /output/research_dir /app/research_dir && \
-    ln -s /output/state_saves /app/state_saves
+# Create output structure
+RUN mkdir -p /output/research_dir/src /output/research_dir/tex /output/state_saves && \
+    chmod -R 777 /output && \
+    rm -rf /app/research_dir /app/state_saves || true && \
+    ln -sf /output/research_dir /app/research_dir && \
+    ln -sf /output/state_saves /app/state_saves
 
 # Copy the application code
 COPY . .

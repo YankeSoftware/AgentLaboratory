@@ -24,17 +24,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY . .
 
-# Create output directories with appropriate permissions
-RUN mkdir -p /output/research_dir /output/state_saves && \
-    chmod -R 777 /output
+# Set up environment variables
+ENV RESEARCH_DIR=/output/research_dir \
+    STATE_SAVES_DIR=/output/state_saves \
+    TF_CPP_MIN_LOG_LEVEL=2
 
-# Set environment variables for output locations
-ENV RESEARCH_DIR=/output/research_dir
-ENV STATE_SAVES_DIR=/output/state_saves
-
-# Create symlinks for output directories
-RUN ln -s /output/research_dir /app/research_dir && \
-    ln -s /output/state_saves /app/state_saves
+# Create directory structure and set permissions
+RUN mkdir -p /output/research_dir/src /output/research_dir/tex /output/state_saves && \
+    chmod -R 777 /output && \
+    ln -sf /output/research_dir /app/research_dir && \
+    ln -sf /output/state_saves /app/state_saves
 
 # Set default command
 ENTRYPOINT ["python", "ai_lab_repo.py"]
