@@ -40,7 +40,142 @@ To select a specific llm set the flag `--llm-backend="llm_model"` for example `-
 
 ## 🖥️ Installation
 
-### Python venv option
+### Quick Start (Docker)
+
+```bash
+# 1. Clone the repository
+git clone git@github.com:SamuelSchmidgall/AgentLaboratory.git
+cd AgentLaboratory
+
+# 2. Create output directory
+mkdir output
+
+# 3. Build Docker image (choose one):
+# Option A: Minimal build (faster, no LaTeX support)
+docker build -f Dockerfile.minimal -t agent-laboratory .
+
+# Option B: Full build (slower, includes LaTeX support)
+docker build -t agent-laboratory .
+
+# Build Time Comparison:
+# Minimal: ~5-10 minutes
+# Full: ~20-30 minutes (includes LaTeX packages)
+
+# 4. Run the container
+docker run -it --rm \
+  -v "$(pwd)/output:/output" \
+  -e OPENAI_API_KEY="your_key" \
+  -e DEEPSEEK_API_KEY="your_key" \
+  agent-laboratory \
+  --llm-backend "deepseek-chat" \
+  --research-topic "Your research topic"
+```
+
+For Windows Command Prompt:
+```cmd
+:: After cloning and cd into directory
+mkdir output
+docker build -t agent-laboratory .
+docker run -it --rm -v "%CD%/output:/output" -e OPENAI_API_KEY="your_key" -e DEEPSEEK_API_KEY="your_key" agent-laboratory --llm-backend "deepseek-chat" --research-topic "Your research topic"
+```
+
+### Docker Setup Details
+
+The Docker setup provides a consistent environment across different machines and eliminates the need to install Python and dependencies directly on your host system.
+
+1. **Build the Docker image**:
+```bash
+docker build -t agent-laboratory .
+```
+
+2. **Run the container**:
+
+Linux/macOS:
+```bash
+docker run -it --rm \
+  -v "$(pwd)/output:/output" \
+  -e OPENAI_API_KEY="your_openai_key" \
+  -e DEEPSEEK_API_KEY="your_deepseek_key" \
+  agent-laboratory \
+  --llm-backend "deepseek-chat" \
+  --research-topic "Your research topic here"
+```
+
+Windows (Command Prompt):
+```cmd
+docker run -it --rm -v "%CD%/output:/output" -e OPENAI_API_KEY="your_openai_key" -e DEEPSEEK_API_KEY="your_deepseek_key" agent-laboratory --llm-backend "deepseek-chat" --research-topic "Your research topic here"
+```
+
+Windows (PowerShell):
+```powershell
+docker run -it --rm `
+  -v "${PWD}/output:/output" `
+  -e OPENAI_API_KEY="your_openai_key" `
+  -e DEEPSEEK_API_KEY="your_deepseek_key" `
+  agent-laboratory `
+  --llm-backend "deepseek-chat" `
+  --research-topic "Your research topic here"
+```
+
+#### Docker Setup Features
+
+1. **Output Organization**:
+   - All outputs are mounted to your local `output` directory
+   - `output/research_dir/` contains:
+     * `src/` - Generated Python code files
+     * `tex/` - LaTeX files
+     * `readme.md` - Project documentation
+     * `report.txt` - Research report
+   - `output/state_saves/` contains checkpoint files for resuming work
+
+2. **Available Options**:
+   - `--llm-backend`: Choose between "deepseek-chat" or OpenAI models
+   - `--compile-latex`: Set to "false" to disable LaTeX compilation
+   - `--copilot-mode`: Set to "true" to enable copilot mode
+   - `--load-existing`: Set to "true" to load from a previous state
+   - `--load-existing-path`: Specify the state file to load from
+
+#### Example Commands
+
+1. **Using DeepSeek with LaTeX disabled**:
+```bash
+docker run -it --rm -v "$(pwd)/output:/output" -e DEEPSEEK_API_KEY="your_key" agent-laboratory --llm-backend "deepseek-chat" --compile-latex "false" --research-topic "Topic"
+```
+
+2. **Using OpenAI with copilot mode**:
+```bash
+docker run -it --rm -v "$(pwd)/output:/output" -e OPENAI_API_KEY="your_key" agent-laboratory --llm-backend "o1-mini" --copilot-mode "true" --research-topic "Topic"
+```
+
+3. **Loading from previous state**:
+```bash
+docker run -it --rm -v "$(pwd)/output:/output" -e OPENAI_API_KEY="your_key" agent-laboratory --load-existing "true" --load-existing-path "state_saves/results_interpretation.pkl" --research-topic "Topic"
+```
+
+#### Important Notes
+
+1. **Directory Mounting**:
+   - The `-v` flag mounts your local `output` directory to the container
+   - All generated files will be accessible in this directory
+   - Make sure the directory exists before running the container
+
+2. **API Keys**:
+   - Both OpenAI and DeepSeek keys can be used simultaneously
+   - Keys are passed through environment variables for security:
+     * `OPENAI_API_KEY` for OpenAI models
+     * `DEEPSEEK_API_KEY` for DeepSeek models
+   - Keys are automatically picked up from environment variables, no need to pass them as command line arguments
+
+3. **Model Selection**:
+   - DeepSeek: Use `--llm-backend "deepseek-chat"`
+   - OpenAI: Use `--llm-backend "o1-mini"` or other available OpenAI models
+
+4. **State Management**:
+   - States are automatically saved in `output/state_saves/`
+   - Use `--load-existing` and `--load-existing-path` to resume from a saved state
+   - States are saved after each phase for recovery
+
+### Python venv option (Alternative)
 
 * We recommend using python 3.12
 
@@ -56,6 +191,10 @@ python -m venv venv_agent_lab
 - Now activate this environment:
 ```bash
 source venv_agent_lab/bin/activate
+```
+
+```
+venv_agent_lab\Scripts\activate.bat
 ```
 
 3. **Install required libraries**

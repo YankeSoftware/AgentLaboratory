@@ -1,0 +1,27 @@
+# Python virtual environment
+venv_agent_lab/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Editor directories
+.vscode/
+.idea/
+
+# State saves and temporary files
+save_states/
+*.log
+*.tmp
+
+# System files
+.DS_Store
+Thumbs.db
