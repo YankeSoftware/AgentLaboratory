@@ -1,8 +1,23 @@
-from agents import *
+import os
+import sys
+import logging
+from pathlib import Path
 from copy import copy
+from typing import Dict, Optional
+
+from agents import *
 from common_imports import *
 from mlesolver import MLESolver
 from torch.backends.mkl import verbose
+from utils.directory_manager import DirectoryManager
+from utils.prompt_manager import PromptManager
+from utils.file_ops import FileOps
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 import argparse
 import pickle
@@ -86,32 +101,53 @@ class LaboratoryWorkflow:
         self.ml_engineer = MLEngineerAgent(model=self.model_backbone, notes=self.notes, max_steps=self.max_steps, openai_api_key=self.openai_api_key)
         self.sw_engineer = SWEngineerAgent(model=self.model_backbone, notes=self.notes, max_steps=self.max_steps, openai_api_key=self.openai_api_key)
 
-        # Initialize directories
+        # Initialize directory management
         try:
-            # Clean up and recreate research_dir structure
-            remove_figures()
-            remove_directory("research_dir")
-            os.makedirs(os.path.join(".", "research_dir", "src"), exist_ok=True)
-            os.makedirs(os.path.join(".", "research_dir", "tex"), exist_ok=True)
+            self.dir_manager = DirectoryManager(base_dir=os.getenv('WORKSPACE_DIR', os.getcwd()))
+            self.prompt_manager = PromptManager()
             
-            # Ensure state_saves exists
-            os.makedirs(os.path.join(".", "state_saves"), exist_ok=True)
+            # Set up directories with proper permissions
+            setup_results = self.dir_manager.setup_directories()
+            if not all(setup_results.values()):
+                failed_dirs = [d for d, success in setup_results.items() if not success]
+                raise RuntimeError(f"Failed to set up directories: {', '.join(failed_dirs)}")
+                
+            # Validate permissions
+            perm_results = self.dir_manager.validate_permissions()
+            if not all(perm_results.values()):
+                failed_perms = [d for d, success in perm_results.items() if not success]
+                raise RuntimeError(f"Permission validation failed for: {', '.join(failed_perms)}")
+                
         except Exception as e:
-            print(f"Warning during directory setup: {str(e)}")
+            raise RuntimeError(f"Critical error during environment setup: {str(e)}")
 
     def set_model(self, model):
         self.set_agent_attr("model", model)
         self.reviewers.model = model
 
     def save_state(self, phase):
+        """Save state for phase with error handling and backup.
+        
+        Args:
+            phase: Phase identifier string
+            
+        Returns:
+            bool: True if successful, False otherwise
         """
-        Save state for phase
-        @param phase: (str) phase string
-        @return: None
-        """
-        phase = phase.replace(" ", "_")
-        with open(f"state_saves/{phase}.pkl", "wb") as f:
-            pickle.dump(self, f)
+        try:
+            # Normalize phase name for filename
+            phase = phase.replace(" ", "_")
+            state_path = self.dir_manager.get_path('state') / f"{phase}.pkl"
+            
+            # Save state with backup
+            return self.file_ops.safe_save(
+                pickle.dumps(self),
+                state_path,
+                binary=True
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to save state for phase {phase}: {str(e)}")
+            return False
 
     def set_agent_attr(self, attr, obj):
         """

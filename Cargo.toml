@@ -1,0 +1,64 @@
+[package]
+name = "agent_laboratory"
+version = "0.1.0"
+edition = "2021"
+authors = ["2jSoftware"]
+description = "A Rust port of Agent Laboratory focusing on research paper analysis and ML experimentation"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+async-trait = "0.1.74"
+
+# HTTP and API clients
+reqwest = { version = "0.11", features = ["json"] }
+tiktoken-rs = "0.5.8" # For token counting
+exponential-backoff = "1.2"  # For retries
+quick-xml = { version = "0.31", features = ["serialize"] }  # For ArXiv API responses
+url = "2.5"  # For URL encoding
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+yaml-rust = "0.4"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging and CLI
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.4", features = ["derive", "env"] }
+
+# File operations and paths
+tempfile = "3.8"
+walkdir = "2.4"
+glob = "0.3"
+lazy_static = "1.4"
+
+# PDF and document processing
+pdf = "0.8"
+lopdf = "0.31"
+pdf-extract = "0.7"  # For better text extraction
+
+# ML tools
+tch = { version = "0.13", optional = true }
+
+[features]
+default = []
+ml = ["dep:tch"]  # Enable ML features when needed
+
+[dev-dependencies]
+assert_fs = "1.0"
+predicates = "3.0"
+mockall = "0.11"
+tokio-test = "0.4"
+rstest = "0.18"
+pretty_assertions = "1.4"
+criterion = "0.5"
+
+[[bench]]
+name = "file_ops"
+harness = false

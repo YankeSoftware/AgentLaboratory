@@ -14,3 +14,7 @@ state_saves/*
 __pycache__/*
 Figure*.png
 testrun.py
+__pycache__/
+test-results/
+*.d
+/rust_agent_laboratory/target
