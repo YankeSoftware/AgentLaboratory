@@ -44,12 +44,17 @@ pdf = "0.8"
 lopdf = "0.31"
 pdf-extract = "0.7"  # For better text extraction
 
-# ML tools
-tch = { version = "0.13", optional = true }
+# GPU and Scientific Computing
+wgpu = { version = "0.19", optional = true }
+rayon = "1.8"
+ndarray = "0.15"
+num-complex = "0.4"
+bytemuck = { version = "1.14", features = ["derive"] }
+futures-intrusive = "0.5"
 
 [features]
 default = []
-ml = ["dep:tch"]  # Enable ML features when needed
+gpu = ["dep:wgpu"]  # Enable GPU acceleration
 
 [dev-dependencies]
 assert_fs = "1.0"
