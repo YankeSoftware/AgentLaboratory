@@ -7,8 +7,10 @@ pub mod agents;
 pub mod utils;
 pub mod tools;
 pub mod llm;
+pub mod state;
 
 // Re-export commonly used items
 pub use agents::Agent;
 pub use utils::{AgentError, AgentResult};
 pub use llm::{LLMClient, LLMConfig, LLMResponse};
+pub use state::ResearchState;
