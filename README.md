@@ -42,79 +42,65 @@ To select a specific llm set the flag `--llm-backend="llm_model"` for example `-
 
 ### Quick Start (Docker)
 
+We provide an easy setup for both Windows and Linux users:
+
+1. **Clone the repository**
 ```bash
-# 1. Clone the repository
 git clone git@github.com:SamuelSchmidgall/AgentLaboratory.git
 cd AgentLaboratory
-
-# 2. Create output directory
-mkdir output
-
-# 3. Build Docker image (choose one):
-# Option A: Minimal build (faster, no LaTeX support)
-docker build -f Dockerfile.minimal -t agent-laboratory .
-
-# Option B: Full build (slower, includes LaTeX support)
-docker build -t agent-laboratory .
-
-# Build Time Comparison:
-# Minimal: ~5-10 minutes
-# Full: ~20-30 minutes (includes LaTeX packages)
-
-# 4. Run the container
-docker run -it --rm \
-  -v "$(pwd)/output:/output" \
-  -e OPENAI_API_KEY="your_key" \
-  -e DEEPSEEK_API_KEY="your_key" \
-  agent-laboratory \
-  --llm-backend "deepseek-chat" \
-  --research-topic "Your research topic"
 ```
 
-For Windows Command Prompt:
+2. **Choose your platform**:
+
+For Windows Users:
 ```cmd
-:: After cloning and cd into directory
-mkdir output
-docker build -t agent-laboratory .
-docker run -it --rm -v "%CD%/output:/output" -e OPENAI_API_KEY="your_key" -e DEEPSEEK_API_KEY="your_key" agent-laboratory --llm-backend "deepseek-chat" --research-topic "Your research topic"
+:: Run the setup script
+run_windows.bat
 ```
+
+For Linux Users:
+```bash
+# Run the setup script
+./run_linux.sh
+```
+
+These scripts will:
+- Create necessary directories
+- Build the appropriate Docker image
+- Set up GPU support if available
+- Handle all environment variables and paths
+
+For detailed setup instructions and customization options, see the [Docker Setup Guide](docker/README.md).
 
 ### Docker Setup Details
 
-The Docker setup provides a consistent environment across different machines and eliminates the need to install Python and dependencies directly on your host system.
+The Docker setup provides a consistent environment across different machines and eliminates the need to install Python and dependencies directly on your host system. We provide three Docker configurations:
 
-1. **Build the Docker image**:
+1. **Standard Setup** (`Dockerfile`)
+   - Full feature set including LaTeX support
+   - GPU acceleration enabled
+   - All ML libraries included
+   - Build time: ~20-30 minutes
+
+2. **Minimal Setup** (`Dockerfile.minimal`)
+   - Basic features without LaTeX
+   - Faster build time (~5-10 minutes)
+   - Smaller image size
+   - Perfect for quick experiments
+
+3. **GPU-Optimized** (`Dockerfile.gpu`)
+   - CUDA optimization
+   - cuDNN and cuBLAS properly configured
+   - Best for machine learning tasks
+   - Full GPU acceleration support
+
+Choose the setup that best matches your needs:
 ```bash
-docker build -t agent-laboratory .
-```
+# For Windows users:
+run_windows.bat [standard|minimal|gpu]
 
-2. **Run the container**:
-
-Linux/macOS:
-```bash
-docker run -it --rm \
-  -v "$(pwd)/output:/output" \
-  -e OPENAI_API_KEY="your_openai_key" \
-  -e DEEPSEEK_API_KEY="your_deepseek_key" \
-  agent-laboratory \
-  --llm-backend "deepseek-chat" \
-  --research-topic "Your research topic here"
-```
-
-Windows (Command Prompt):
-```cmd
-docker run -it --rm -v "%CD%/output:/output" -e OPENAI_API_KEY="your_openai_key" -e DEEPSEEK_API_KEY="your_deepseek_key" agent-laboratory --llm-backend "deepseek-chat" --research-topic "Your research topic here"
-```
-
-Windows (PowerShell):
-```powershell
-docker run -it --rm `
-  -v "${PWD}/output:/output" `
-  -e OPENAI_API_KEY="your_openai_key" `
-  -e DEEPSEEK_API_KEY="your_deepseek_key" `
-  agent-laboratory `
-  --llm-backend "deepseek-chat" `
-  --research-topic "Your research topic here"
+# For Linux users:
+./run_linux.sh [standard|minimal|gpu]
 ```
 
 #### Docker Setup Features

@@ -1,0 +1,144 @@
+name: Comprehensive Testing
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+        docker-config: ['standard', 'minimal', 'gpu']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov docker
+        pip install -r requirements.txt
+    
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: |
+        docker build -f docker/${{ matrix.docker-config }}/Dockerfile -t agent-laboratory:${{ matrix.docker-config }} .
+    
+    - name: Run tests
+      run: |
+        pytest tests/deployment/linux/ -v
+        pytest tests/deployment/test_docker_builds.py -v
+
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+        docker-config: ['standard', 'minimal']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov docker
+        pip install -r requirements.txt
+    
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: |
+        docker build -f docker/${{ matrix.docker-config }}/Dockerfile -t agent-laboratory:${{ matrix.docker-config }} .
+    
+    - name: Run tests
+      run: |
+        pytest tests/deployment/windows/ -v
+        pytest tests/deployment/test_docker_builds.py -v
+
+  gpu-test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'  # Manual trigger only for GPU tests
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov docker
+        pip install -r requirements.txt
+    
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Set up NVIDIA Container Toolkit
+      run: |
+        distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+        curl -s -L https://nvidia.github.io/libnvidia-container/gpgkey | sudo apt-key add -
+        curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        sudo apt-get update
+        sudo apt-get install -y nvidia-container-toolkit
+    
+    - name: Build GPU Docker image
+      run: |
+        docker build -f docker/gpu/Dockerfile -t agent-laboratory:gpu .
+    
+    - name: Run GPU tests
+      run: |
+        pytest tests/deployment/test_docker_builds.py::test_gpu_support -v
+
+  integration-test:
+    needs: [test-linux, test-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov docker
+        pip install -r requirements.txt
+    
+    - name: Run integration tests
+      run: |
+        pytest tests/integration/ -v
+
+    - name: Generate coverage report
+      run: |
+        pytest --cov=. --cov-report=xml tests/
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
