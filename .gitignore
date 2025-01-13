@@ -18,3 +18,4 @@ __pycache__/
 test-results/
 *.d
 /rust_agent_laboratory/target
+/target
